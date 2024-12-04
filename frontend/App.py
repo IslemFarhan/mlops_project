@@ -1,12 +1,10 @@
 import streamlit as st
 import requests
 import pandas as pd
-import json
-API_URL = "http://127.0.0.1:8000/predict"
+import plotly.express as px
 
 st.set_page_config(page_title="Health Risk Prediction", layout="wide")
 
-# Style général avec CSS
 st.markdown(
     """
     <style>
@@ -28,92 +26,48 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Ajouter un logo en haut
 st.image("C:/Users/MSI/MLOps_Project/frontend/heart.gif", width=100)
 
 def show_classification():
     st.markdown('<h1 class="stTitle">Prédiction des Risques de Santé</h1>', unsafe_allow_html=True)
     st.markdown('<h3>Entrez vos données pour estimer les risques de santé :</h3>', unsafe_allow_html=True)
 
-    # Champs d'entrée utilisateur
-    # general_health = st.selectbox("Santé Générale", ["Poor", "Fair", "Good", "Very Good", "Excellent"])
-    # checkup = st.selectbox("Fréquence des Checkups Médicaux", ["Never", "5 or more years ago", "Within the past 5 years", "Within the past 2 years",'Within the past year'])
-    # exercise = st.number_input("Heures d'exercice par semaine", min_value=0.0, max_value=50.0, value=3.0)
-    # skin_cancer = st.selectbox("Antécédents de cancer de la peau ?", [("Yes", 1), ("No", 0)])
-    # other_cancer = st.selectbox("Autres types de cancer ?", [("Yes", 1), ("No", 0)])
-    # diabetes = st.selectbox("Diabète ?", [("Yes", 1), ("No", 0)])
-    # arthritis = st.selectbox("Arthrite ?", [("Yes", 1), ("No", 0)])
-    # sex = st.selectbox("Sexe", [("Male", 1), ("Female", 0)])
-    # age_category = st.selectbox("Catégorie d'âge", ["18-24", "25-29", "30-34", "45-54", "35-39", "40-44","45-49",'50-54','55-59','60-64','65-69','70-74','75-79','80+'])
-    # height_cm = st.number_input("Taille (cm)", min_value=100.0, max_value=250.0, value=170.0)
-    # weight_kg = st.number_input("Poids (kg)", min_value=30.0, max_value=200.0, value=70.0)
-    # bmi = st.number_input("BMI", min_value=10.0, max_value=50.0, value=25.0)
-    # smoking_history = st.selectbox("Fumeur ?", [("Yes", 1), ("No", 0)])
-    # alcohol_consumption = st.number_input("Consommation d'alcool (par semaine)", min_value=0.0, max_value=50.0, value=1.0)
-    # fruit_consumption = st.number_input("Consommation régulière de fruits ?", min_value=00.0, max_value=100.0, value=17.0)
-    # green_vegetables_consumption = st.number_input("Consommation régulière de légumes verts ?", min_value=00.0, max_value=250.0, value=10.0)
-    # Default values
     default_data = {
-        "General_Health": "Poor",
-        "Checkup": "Within the past 2 years",
-        "Exercise": "No",
-        "Skin_Cancer": "No",
-        "Other_Cancer": "No",
-        "Diabetes": "No",
-        "Arthritis": "Yes",
-        "Sex": "Female",
-        "Age_Category": "70-74",
-        "Height_(cm)": 150.0,
-        "Weight_(kg)": 32.66,
-        "BMI": 14.54,
-        "Smoking_History": "Yes",
-        "Alcohol_Consumption": 0.0,
-        "Fruit_Consumption": 30.0,
-        "Green_Vegetables_Consumption": 16.0,
+        "general_health": 3,
+        "checkup": 1,
+        "exercise": 1,
+        "skin_cancer": 1,
+        "other_cancer": 0,
+        "diabetes": 1,
+        "arthritis": 0,
+        "sex": 1,
+        "age_category": 5,
+        "height_cm": 170.5,
+        "weight_kg": 75.3,
+        "bmi": 25.9,
+        "smoking_history": 2,
+        "alcohol_consumption": 1.3,
+        "fruit_consumption": 3,
+        "green_vegetables_consumption": 4
     }
 
-    st.title("Health Data Input Form")
+    st.title("Formulaire")
 
-    # Create input fields with default values
     inputs = {
-        key: st.text_input(key, value=str(value)) if isinstance(value, str) else st.number_input(key, value=value)
+        key: st.number_input(key, value=value)
         for key, value in default_data.items()
     }
-    input_data=inputs
-    # Bouton pour prédire
-    if st.button("Prédire"):
-        # Préparer les données
-        # input_data = {
-        #     "general_health": general_health,
-        #     "checkup": checkup,
-        #     "exercise": exercise,
-        #     "skin_cancer": skin_cancer[1],
-        #     "other_cancer": other_cancer[1],
-        #     "diabetes": diabetes[1],
-        #     "arthritis": arthritis[1],
-        #     "sex": sex[1],
-        #     "age_category": age_category,
-        #     "height_cm": height_cm,
-        #     "weight_kg": weight_kg,
-        #     "bmi": bmi,
-        #     "smoking_history": smoking_history[1],
-        #     "alcohol_consumption": alcohol_consumption,
-        #     "fruit_consumption": fruit_consumption,
-        #     "green_vegetables_consumption": green_vegetables_consumption,
-        #}
-        # Appel à l'API
-        st.write(input_data)
-        response = requests.post("http://127.0.0.1:8000/predict", data=json.dumps(input_data))
-        predictions = response.json().get("predictions")
-        st.write(response)
-        # if response.status_code == 200:
-        #     result = response.json()
-        #     st.success(f"Résultat de la prédiction : {'Risque élevé' if result['prediction'] == 1 else 'Risque faible'}")
-        # else:
-        #     st.error("Erreur lors de l'appel à l'API !")
-        st.write(predictions)
-        
 
+    if st.button("Prédire"):
+        input_data = {key: float(value) for key, value in inputs.items()}
+
+        response = requests.post("http://127.0.0.1:8000/predict", json=input_data)
+
+        if response.status_code == 200:
+            prediction = response.json().get("prediction", "Aucune prédiction disponible")
+            st.write(f"Prédictions : {prediction}")
+        else:
+            st.write("Erreur lors de la prédiction. Veuillez réessayer plus tard.")
 
 def show_problem_description():
     st.markdown('<h1 class="stTitle">Description du Problème</h1>', unsafe_allow_html=True)
@@ -124,7 +78,6 @@ def show_problem_description():
         en fonction de leurs habitudes et conditions de vie, afin de favoriser une prise en charge préventive.
     """)
 
-
 def show_powerbi_dashboard():
     st.markdown('<h1 class="stTitle">Tableau de Bord Power BI</h1>', unsafe_allow_html=True)
     st.markdown("### Analyse détaillée avec Power BI")
@@ -133,7 +86,28 @@ def show_powerbi_dashboard():
         unsafe_allow_html=True,
     )
 
+    df = pd.read_csv('C:/Users/MSI/Desktop/mlops_project/data/CVD.csv')
 
+    sex_filter = st.sidebar.multiselect("Sélectionner le sexe", options=df['Sex'].unique(), default=df['Sex'].unique())
+    age_filter = st.sidebar.multiselect("Sélectionner la catégorie d'âge", options=df['Age_Category'].unique(), default=df['Age_Category'].unique())
+
+    filtered_data = df[df['Sex'].isin(sex_filter) & df['Age_Category'].isin(age_filter)]
+
+    fig1 = px.pie(filtered_data, names='Sex', values='Alcohol_Consumption', title="Consommation d'alcool par sexe")
+    st.plotly_chart(fig1)
+
+    fig2 = px.bar(filtered_data, x='Age_Category', color='Heart_Disease', barmode='group',
+                title="Répartition des maladies cardiaques par catégorie d'âge")
+    st.plotly_chart(fig2)
+
+    fig3 = px.line(filtered_data, x='Age_Category', y=['Fruit_Consumption', 'Green_Vegetables_Consumption'], 
+                title="Consommation de fruits et légumes par catégorie d'âge")
+    st.plotly_chart(fig3)
+
+    fig4 = px.bar(filtered_data, x='Sex', color='Heart_Disease', title="Répartition des maladies cardiaques par sexe")
+    st.plotly_chart(fig4)
+
+    st.write("Données filtrées selon vos critères :", filtered_data)
 
 menu = st.sidebar.selectbox("Menu", ["Description du Problème", "Classification", "Tableau de Bord Power BI"])
 

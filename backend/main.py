@@ -13,15 +13,12 @@ import json
 @app.get("/")
 def read_root():
     return {"message": "Bienvenue sur mon application FastAPI"}
-# Charger le modèle
 
 
-# Initialize DagsHub and MLflow integration
 dagshub.init(repo_owner='RimMth', repo_name='mlops_project', mlflow=True)
 
 mlflow.set_experiment("mlops")
 
-# Set the tracking URI for MLflow to log the experiment in DagsHub
 mlflow.set_tracking_uri("https://dagshub.com/RimMth/mlops_project.mlflow") 
 
 reports_path = "models/run_info.json"
@@ -31,7 +28,6 @@ model_name = run_info['model_name']
 
 
 try:
-    # Create an MlflowClient to interact with the MLflow server
     client = mlflow.tracking.MlflowClient()
 
     # Get the latest version of the model in the Production stage
@@ -39,7 +35,7 @@ try:
 
     if versions:
         latest_version = versions[0].version
-        run_id = versions[0].run_id  # Fetching the run ID from the latest version
+        run_id = versions[0].run_id  
         print(f"Latest version in Production: {latest_version}, Run ID: {run_id}")
 
         # Construct the logged_model string
@@ -146,13 +142,13 @@ class HealthDataInput(BaseModel):
         json_schema_extra = {
             "example": {
                 "general_health": 3,
-                "checkup": "Yes",
-                "exercise": "Yes",
-                "skin_cancer": "Yes",
+                "checkup": 1,
+                "exercise": 1,
+                "skin_cancer": 1,
                 "other_cancer": 0,
-                "diabetes": "Yes",
+                "diabetes": 1,
                 "arthritis": 0,
-                "sex": "Yes",
+                "sex": 1,
                 "age_category": 5,
                 "height_cm": 170.5,
                 "weight_kg": 75.3,
@@ -165,10 +161,8 @@ class HealthDataInput(BaseModel):
         }
 
 
-# Endpoint pour les prédictions
 @app.post("/predict")
 def predict_health_risk(data: HealthDataInput):
-    # Préparer les données pour le modèle
     data = pd.DataFrame(data.dict(), index=[0])
 
     features = ['General_Health', 'Checkup', 'Exercise', 'Skin_Cancer',
@@ -177,7 +171,6 @@ def predict_health_risk(data: HealthDataInput):
                 'Alcohol_Consumption', 'Fruit_Consumption',
                 'Green_Vegetables_Consumption']
 
-    # Conversion en DataFrame
     df = pd.DataFrame(data, columns=features)
 
     df=preprocess_health_data(df)
@@ -185,8 +178,6 @@ def predict_health_risk(data: HealthDataInput):
     df = pd.DataFrame(data, columns=features)
 
 
-    # Obtenir la prédiction et la probabilité
     prediction = loaded_model.predict(df)[0]
 
-    # Return results as JSON-compatible
     return {"prediction": int(prediction)}
